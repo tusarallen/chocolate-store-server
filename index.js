@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -30,16 +30,57 @@ async function run() {
       .db("chocolateDB")
       .collection("chocolates");
 
-    app.get("/chocolate", async (req, res) => {
-        const result = await chocolateCollection.find().toArray();
-        res.send(result)
-    })
+    // read data
+    app.get("/chocolates", async (req, res) => {
+      const result = await chocolateCollection.find().toArray();
+      console.log(result);
+      res.send(result);
+    });
 
+    // send specific data for update 1
+    app.get("/updateChocolate/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await chocolateCollection.findOne(query);
+      res.send(result);
+    });
+
+    // create data
     app.post("/chocolates", async (req, res) => {
       const updatedChocolate = req.body;
       console.log(updatedChocolate);
       const result = await chocolateCollection.insertOne(updatedChocolate);
-      console.log(result);
+      res.send(result);
+    });
+
+    // update data 3
+    app.put("/updateChocolate/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updatedChocolate = req.body;
+      const chocolates = {
+        $set: {
+          name: updatedChocolate.name,
+          country: updatedChocolate.country,
+          category: updatedChocolate.category,
+          photo: updatedChocolate.photo,
+        },
+      };
+      const result = await chocolateCollection.updateOne(
+        filter,
+        chocolates,
+        options
+      );
+      res.send(result);
+    });
+
+    // delete data
+    app.delete("/chocolates/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await chocolateCollection.deleteOne(query);
+      res.send(result);
     });
 
     // Send a ping to confirm a successful connection
